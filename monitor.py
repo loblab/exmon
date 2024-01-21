@@ -9,7 +9,7 @@ import importlib
 from pathlib import Path
 
 DESCRIPTION = 'Extensible monitor by Python'
-VERSION = "pymon ver 0.0.7 (1/21/2024)"
+VERSION = "pymon ver 0.0.8 (1/21/2024)"
 
 class Monitor:
 
@@ -134,8 +134,11 @@ class Monitor:
             self.save_point(point)
 
     def run_once(self):
+        t1 = time.time()
         points = self.sample_points()
         self.save_points(points)
+        t2 = time.time()
+        self.log.debug(f'Sample loop takes {t2-t1:.3f} seconds')
 
     def run(self):
         if 'interval' in self.cfg:
@@ -154,11 +157,14 @@ class Monitor:
                 self.log.warning(f'Run out of time: wait {wait:.3f}s')
 
     def main(self):
-        self.cfg = self.load_config()
-        self.log.debug(self.cfg)
-        self.sources = self.init_sources(self.cfg['source'])
-        self.stores = self.init_stores(self.cfg['store'])
-        self.run()
+        try:
+            self.cfg = self.load_config()
+            self.log.debug(self.cfg)
+            self.sources = self.init_sources(self.cfg['source'])
+            self.stores = self.init_stores(self.cfg['store'])
+            self.run()
+        except KeyboardInterrupt:
+            self.log.info('Ctrl+C has been pressed. Exiting...')
 
 if __name__ == '__main__':
     app = Monitor(DESCRIPTION, VERSION)

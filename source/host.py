@@ -13,13 +13,16 @@ class Source:
     def sample(self):
         point = {}
 
-        start = time.time()
+        t1 = time.time()
         self.sample_host(point)
-        self.log.debug("sample_host takes {} seconds".format(time.time() - start))
+        t2 = time.time()
+        dur = t2 - t1
+        self.log.debug(f'sample_host takes {dur:.3f} seconds')
 
-        start = time.time()
         self.sample_disk(point)
-        self.log.debug("sample_disk takes {} seconds".format(time.time() - start))
+        t3 = time.time()
+        dur = t3 - t2
+        self.log.debug(f'sample_disk takes {dur:.3f} seconds')
         return point
 
     def get_disk_space(self, path):
