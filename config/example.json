@@ -1,10 +1,10 @@
 {
-    "source": {
+    "source": [{
         "module": "source.fake"
-    },
+    }],
     "store": [{
         "module": "store.fs.jsondir",
         "dir": "/tmp/exmon",
-        "file": "%Y/%m/%d/%H%M%S.json"
+        "file": "%Y/%m/%d/%H%M%S-%f.json"
     }]
 }

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import os
 import sys
 import json
@@ -9,7 +9,7 @@ import importlib
 from pathlib import Path
 
 DESCRIPTION = 'Extensible monitor by Python'
-VERSION = "pymon ver 0.0.5 (1/21/2024)"
+VERSION = "pymon ver 0.0.6 (1/21/2024)"
 
 class Monitor:
 
@@ -67,6 +67,19 @@ class Monitor:
             return None
         return cfg
 
+    @staticmethod
+    def merge_dict(cfg, c):
+        for k in c:
+            if k in cfg:
+                if isinstance(cfg[k], list):
+                    cfg[k].extend(c[k])
+                elif isinstance(cfg[k], dict):
+                    cfg[k].update(c[k])
+                else:
+                    cfg[k] = c[k]
+            else:
+                cfg[k] = c[k]
+
     def load_config(self):
         cfg = None
         for cfgfile in self.args.config:
@@ -74,12 +87,7 @@ class Monitor:
             if cfg is None:
                 cfg = c
             else:
-                # merge c into cfg
-                for k in c:
-                    if k in cfg:
-                        cfg[k] = {**cfg[k], **c[k]}
-                    else:
-                        cfg[k] = c[k]
+                self.merge_dict(cfg, c)
         self.log.debug(json.dumps(cfg, sort_keys=True, indent=4))
         return cfg
 
@@ -91,19 +99,32 @@ class Monitor:
         module = importlib.import_module(cfg['module'])
         return module.Store(cfg, self)
 
-    def init_stores(self, cfg):
+    def init_sources(self, cfgs):
+        sources = []
+        for cfg in cfgs:
+            sources.append(self.init_source(cfg))
+        return sources
+
+    def init_stores(self, cfgs):
         stores = []
-        if isinstance(cfg, list):
-            for c in cfg:
-                stores.append(self.init_store(c))
-        else:
+        for cfg in cfgs:
             stores.append(self.init_store(cfg))
         return stores
 
+    def sample_points(self):
+        points = []
+        for source in self.sources:
+            pts = source.sample()
+            if not isinstance(pts, list):
+                pts = [pts]
+            for pt in pts:
+                if 'time' not in pt:
+                    pt['time'] = time.time()
+            points.extend(pts)
+        return points
+
     def save_point(self, point):
         for store in self.stores:
-            if "time" not in point:
-                point["time"] = time.time()
             store.save(point)
 
     def save_points(self, points):
@@ -115,9 +136,9 @@ class Monitor:
     def main(self):
         self.cfg = self.load_config()
         self.log.debug(self.cfg)
-        self.source = self.init_source(self.cfg['source'])
+        self.sources = self.init_sources(self.cfg['source'])
         self.stores = self.init_stores(self.cfg['store'])
-        points = self.source.sample()
+        points = self.sample_points()
         self.save_points(points)
         return 0
 

@@ -1,6 +1,6 @@
 {
-    "source": {
+    "source": [{
         "module": "source.container",
-        "container": "nginx"
-    }
+        "container": "syncthing"
+    }]
 }
