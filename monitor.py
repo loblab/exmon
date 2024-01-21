@@ -9,7 +9,7 @@ import importlib
 from pathlib import Path
 
 DESCRIPTION = 'Extensible monitor by Python'
-VERSION = "pymon ver 0.0.8 (1/21/2024)"
+VERSION = "pymon ver 0.0.9 (1/21/2024)"
 
 class Monitor:
 
@@ -132,19 +132,43 @@ class Monitor:
             points = [points]
         for point in points:
             self.save_point(point)
+        c = len(points)
+        self.count += c
+        self.c_rpt += c
+        if self.c_rpt >= self.trigger_report:
+            self.log.info(f'Wrote {self.count} points')
+            self.c_rpt -= self.trigger_report
+
+    def get_config(self, key, default=None):
+        if key in self.cfg:
+            val = self.cfg[key]
+        else:
+            val = default
+        self.log.debug(f'Config: {key} ==> {val}')
+        return val
 
     def run_once(self):
         t1 = time.time()
         points = self.sample_points()
-        self.save_points(points)
+        self.buffer.extend(points)
+        if len(self.buffer) >= self.batch:
+            self.save_points(self.buffer)
+            self.buffer.clear()
         t2 = time.time()
         self.log.debug(f'Sample loop takes {t2-t1:.3f} seconds')
 
     def run(self):
-        if 'interval' in self.cfg:
-            interval = self.cfg['interval']
-        else:
-            return self.run_once()
+        interval = self.get_config('interval')
+        self.batch = self.get_config('batch', 1)
+        self.trigger_report = self.get_config('report', 128)
+        self.buffer = []
+        self.count = 0
+        self.c_rpt = 0
+        if interval is None:
+            self.run_once()
+            return 0
+
+        self.log.debug('Run in loop mode ...')
         t1 = time.time()
         t2 = t1
         while True:
@@ -165,6 +189,13 @@ class Monitor:
             self.run()
         except KeyboardInterrupt:
             self.log.info('Ctrl+C has been pressed. Exiting...')
+        finally:
+            qsize = len(self.buffer)
+            if qsize > 0:
+                self.log.info(f'Wrote {qsize} points in buffer ...')
+                self.save_points(self.buffer)
+                self.buffer.clear()
+            self.log.info(f'Wrote {self.count} points in total')
 
 if __name__ == '__main__':
     app = Monitor(DESCRIPTION, VERSION)

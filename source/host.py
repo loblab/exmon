@@ -30,7 +30,7 @@ class Source:
         return s.f_bavail * s.f_bsize / 1e9  # GB
 
     def sample_host(self, point):
-        cpuload = psutil.cpu_percent(interval=3)
+        cpuload = psutil.cpu_percent(interval=1)
         mem = psutil.virtual_memory()
         temp = psutil.sensors_temperatures()
         if 'coretemp' in temp:

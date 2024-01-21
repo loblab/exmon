@@ -1,5 +1,7 @@
 {
-    "interval": 5,
+    "interval": 3,
+    "batch": 4,
+    "report": 12,
     "source": [{
         "module": "source.fake"
     }],
