@@ -9,7 +9,7 @@ import importlib
 from pathlib import Path
 
 DESCRIPTION = 'Extensible monitor by Python'
-VERSION = "pymon ver 0.0.9 (1/21/2024)"
+VERSION = "pymon ver 0.1.0 (1/21/2024)"
 
 class Monitor:
 
@@ -123,15 +123,9 @@ class Monitor:
             points.extend(pts)
         return points
 
-    def save_point(self, point):
-        for store in self.stores:
-            store.save(point)
-
     def save_points(self, points):
-        if not isinstance(points, list):
-            points = [points]
-        for point in points:
-            self.save_point(point)
+        for store in self.stores:
+            store.save(points)
         c = len(points)
         self.count += c
         self.c_rpt += c

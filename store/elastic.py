@@ -1,8 +1,9 @@
 import json
 from datetime import datetime
 from elasticsearch import Elasticsearch
+from base import BaseStore
 
-class Store:
+class Store(BaseStore):
 
     def __init__(self, cfg, app):
         self.log = app.log
@@ -14,7 +15,7 @@ class Store:
         self.es = Elasticsearch(url, basic_auth=(user, password))
         self.index = cfg['index']
 
-    def save(self, point):
+    def write_point(self, point):
         self.log.info(f'Save results to database {self.index} ...')
         ts1 = point['time']
         ts2 = datetime.fromtimestamp(ts1)
