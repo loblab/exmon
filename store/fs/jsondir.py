@@ -18,7 +18,7 @@ class Store:
         # generate the filename by the pattern in self.file and the timestamp
         filename = ts2.strftime(self.file)
         path = self.rootdir / filename
-        self.log.debug(f'path: {path}')
         path.parent.mkdir(parents=True, exist_ok=True)
         with open(path, 'w') as f:
             json.dump(point, f, indent=4, sort_keys=True)
+        self.log.debug(f'saved to: {path}')
