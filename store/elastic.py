@@ -6,7 +6,7 @@ class Store:
 
     def __init__(self, cfg, app):
         self.log = app.log
-        self.log.debug(f'cfg: {cfg}')
+        self.log.debug(f'Init store: {cfg}')
         url = cfg['url']
         user = cfg['user']
         password = cfg['password']

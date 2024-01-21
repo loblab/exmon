@@ -6,7 +6,7 @@ class Store:
 
     def __init__(self, cfg, app):
         self.log = app.log
-        self.log.debug(f'cfg: {cfg}')
+        self.log.debug(f'Init store: {cfg}')
         host = cfg['host']
         port = cfg['port']
         user = cfg['user']

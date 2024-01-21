@@ -1,0 +1,7 @@
+{
+    "store": [{
+        "module": "store.fs.jsondir",
+        "dir": "/tmp/exmon2",
+        "file": "%Y/%m/%d/%H%M%S-%f.json"
+    }]
+}

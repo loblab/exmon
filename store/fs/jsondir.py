@@ -6,7 +6,7 @@ class Store:
 
     def __init__(self, cfg, app):
         self.log = app.log
-        self.log.debug(f'cfg: {cfg}')
+        self.log.debug(f'Init store: {cfg}')
         self.rootdir = Path(cfg['dir'])
         self.rootdir.mkdir(parents=True, exist_ok=True)
         self.file = cfg['file']
