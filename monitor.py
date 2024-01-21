@@ -9,7 +9,7 @@ import importlib
 from pathlib import Path
 
 DESCRIPTION = 'Extensible monitor by Python'
-VERSION = "pymon ver 0.0.4 (1/21/2024)"
+VERSION = "pymon ver 0.0.5 (1/21/2024)"
 
 class Monitor:
 
@@ -29,8 +29,8 @@ class Monitor:
             choices=Monitor.LOG_LEVEL.keys(),
             help='log level, default: info')
         argps.add_argument('-c', '--config', dest='config', type=Path,
-            required=True,
-            help="config file, json format")
+            required=True, action='append',
+            help="config files, json format, can be multiple: -c 1.json -c 2.json")
         self.args = argps.parse_args()
         self.init_logger()
 
@@ -57,7 +57,7 @@ class Monitor:
         ch.setFormatter(formatter)
         self.log.addHandler(ch)
 
-    def load_config(self, cfgfile):
+    def load_cfgfile(self, cfgfile):
         self.log.debug(f'Load config file: {cfgfile} ...')
         try:
             with open(cfgfile, 'r') as f:
@@ -65,7 +65,22 @@ class Monitor:
         except Exception as e:
             self.log.error(f'Load config file {cfgfile} failed: {e}')
             return None
-        self.log.debug(json.dumps(cfg, indent=4))
+        return cfg
+
+    def load_config(self):
+        cfg = None
+        for cfgfile in self.args.config:
+            c = self.load_cfgfile(cfgfile)
+            if cfg is None:
+                cfg = c
+            else:
+                # merge c into cfg
+                for k in c:
+                    if k in cfg:
+                        cfg[k] = {**cfg[k], **c[k]}
+                    else:
+                        cfg[k] = c[k]
+        self.log.debug(json.dumps(cfg, sort_keys=True, indent=4))
         return cfg
 
     def init_source(self, cfg):
@@ -98,7 +113,7 @@ class Monitor:
             self.save_point(point)
 
     def main(self):
-        self.cfg = self.load_config(self.args.config)
+        self.cfg = self.load_config()
         self.log.debug(self.cfg)
         self.source = self.init_source(self.cfg['source'])
         self.stores = self.init_stores(self.cfg['store'])

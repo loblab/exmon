@@ -21,4 +21,4 @@ class Store:
         self.log.debug(f'path: {path}')
         path.parent.mkdir(parents=True, exist_ok=True)
         with open(path, 'w') as f:
-            json.dump(point, f, indent=4)
+            json.dump(point, f, indent=4, sort_keys=True)
