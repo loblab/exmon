@@ -9,7 +9,7 @@ import importlib
 from pathlib import Path
 
 DESCRIPTION = 'Extensible monitor by Python'
-VERSION = "pymon ver 0.0.3 (1/21/2024)"
+VERSION = "pymon ver 0.0.4 (1/21/2024)"
 
 class Monitor:
 
@@ -68,16 +68,42 @@ class Monitor:
         self.log.debug(json.dumps(cfg, indent=4))
         return cfg
 
-    def init_source(self):
-        cfg = self.cfg['source']
+    def init_source(self, cfg):
         module = importlib.import_module(cfg['module'])
-        self.source = module.Source(self.log, cfg)
+        return module.Source(cfg, self)
+
+    def init_store(self, cfg):
+        module = importlib.import_module(cfg['module'])
+        return module.Store(cfg, self)
+
+    def init_stores(self, cfg):
+        stores = []
+        if isinstance(cfg, list):
+            for c in cfg:
+                stores.append(self.init_store(c))
+        else:
+            stores.append(self.init_store(cfg))
+        return stores
+
+    def save_point(self, point):
+        for store in self.stores:
+            if "time" not in point:
+                point["time"] = time.time()
+            store.save(point)
+
+    def save_points(self, points):
+        if not isinstance(points, list):
+            points = [points]
+        for point in points:
+            self.save_point(point)
 
     def main(self):
         self.cfg = self.load_config(self.args.config)
-        self.init_source()
+        self.log.debug(self.cfg)
+        self.source = self.init_source(self.cfg['source'])
+        self.stores = self.init_stores(self.cfg['store'])
         points = self.source.sample()
-        self.log.debug(f'Points: {points}')
+        self.save_points(points)
         return 0
 
 if __name__ == '__main__':
