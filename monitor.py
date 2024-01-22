@@ -9,7 +9,7 @@ import importlib
 from pathlib import Path
 
 DESCRIPTION = 'Extensible monitor by Python'
-VERSION = "pymon ver 0.1.0 (1/21/2024)"
+VERSION = "pymon ver 0.1.1 (1/22/2024)"
 
 class Monitor:
 
@@ -114,13 +114,17 @@ class Monitor:
     def sample_points(self):
         points = []
         for source in self.sources:
+            t1 = time.time() * 1000
             pts = source.sample()
             if not isinstance(pts, list):
                 pts = [pts]
             for pt in pts:
                 if 'time' not in pt:
                     pt['time'] = time.time()
+                self.log.debug(json.dumps(pt, sort_keys=True, indent=4))
             points.extend(pts)
+            t2 = time.time() * 1000
+            self.log.debug(f'Sample {source.name} takes {t2-t1:.3f} ms')
         return points
 
     def save_points(self, points):
@@ -142,14 +146,17 @@ class Monitor:
         return val
 
     def run_once(self):
-        t1 = time.time()
+        t1 = time.time() * 1000
         points = self.sample_points()
         self.buffer.extend(points)
+        t2 = time.time() * 1000
+        self.log.debug(f'Sample loop takes {t2-t1:.3f} ms')
         if len(self.buffer) >= self.batch:
+            t1 = time.time() * 1000
             self.save_points(self.buffer)
             self.buffer.clear()
-        t2 = time.time()
-        self.log.debug(f'Sample loop takes {t2-t1:.3f} seconds')
+            t2 = time.time() * 1000
+            self.log.debug(f'Store loop takes {t2-t1:.3f} ms')
 
     def run(self):
         interval = self.get_config('interval')

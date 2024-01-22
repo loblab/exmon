@@ -1,10 +1,10 @@
 import random
+from .base import BaseSource
 
-class Source:
+class Source(BaseSource):
 
     def __init__(self, cfg, app):
-        self.log = app.log
-        self.log.debug(f'Init source: {cfg}')
+        super().__init__(cfg, app)
 
     def sample(self):
         point = {}

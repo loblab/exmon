@@ -1,13 +1,12 @@
 import json
 from datetime import datetime
 from elasticsearch import Elasticsearch
-from base import BaseStore
+from .base import BaseStore
 
 class Store(BaseStore):
 
     def __init__(self, cfg, app):
-        self.log = app.log
-        self.log.debug(f'Init store: {cfg}')
+        super().__init__(cfg, app)
         url = cfg['url']
         user = cfg['user']
         password = cfg['password']

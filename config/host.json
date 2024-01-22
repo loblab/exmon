@@ -1,13 +1,13 @@
 {
-    "interval": 2,
+    "interval": 1,
     "batch": 4,
     "report": 12,
     "source": [{
-        "module": "source.fake"
+        "module": "source.host"
     }],
     "store": [{
         "module": "store.fs.jsondir",
-        "dir": "/tmp/exmon/example",
+        "dir": "/tmp/exmon/host",
         "file": "%Y/%m/%d/%H%M%S-%f.json"
     }]
 }

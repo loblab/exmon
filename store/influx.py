@@ -1,12 +1,12 @@
 import json
 from datetime import datetime
 from influxdb import InfluxDBClient
+from .base import BaseStore
 
-class Store:
+class Store(BaseStore):
 
     def __init__(self, cfg, app):
-        self.log = app.log
-        self.log.debug(f'Init store: {cfg}')
+        super().__init__(cfg, app)
         host = cfg['host']
         port = cfg['port']
         user = cfg['user']

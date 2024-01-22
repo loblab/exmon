@@ -1,8 +1,8 @@
 import re
 import sys
-import subprocess
+from .base import BaseSource
 
-class Source:
+class Source(BaseSource):
 
     # Use KB as size default unit
     KB_UNIT = {
@@ -18,8 +18,7 @@ class Source:
     }
 
     def __init__(self, cfg, app):
-        self.log = app.log
-        self.log.debug(f'Init source: {cfg}')
+        super().__init__(cfg, app)
         self.container = cfg['container']
         if 'java' in cfg:
             self.java = cfg['java']
@@ -38,13 +37,6 @@ class Source:
         if self.java:
             self.sample_java(point)
         return point
-
-    def run(self, cmdline):
-        self.log.debug(cmdline)
-        b = subprocess.check_output(cmdline, shell=True)
-        s = bytes.decode(b).strip()
-        self.log.debug(s)
-        return s
 
     def sample_cont(self, point):
         self.log.debug(f'Get cpu/memory/netio/diskio in container {self.container} ...')

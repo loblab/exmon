@@ -6,8 +6,7 @@ from ..base import BaseStore
 class Store(BaseStore):
 
     def __init__(self, cfg, app):
-        self.log = app.log
-        self.log.debug(f'Init store: {cfg}')
+        super().__init__(cfg, app)
         self.rootdir = Path(cfg['dir'])
         self.rootdir.mkdir(parents=True, exist_ok=True)
         self.file = cfg['file']
