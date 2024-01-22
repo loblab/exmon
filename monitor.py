@@ -9,7 +9,7 @@ import importlib
 from pathlib import Path
 
 DESCRIPTION = 'Extensible monitor by Python'
-VERSION = "pymon ver 0.1.1 (1/22/2024)"
+VERSION = "pymon ver 0.1.2 (1/22/2024)"
 
 class Monitor:
 
@@ -95,9 +95,9 @@ class Monitor:
         module = importlib.import_module(cfg['module'])
         return module.Source(cfg, self)
 
-    def init_store(self, cfg):
+    def init_visitor(self, cfg):
         module = importlib.import_module(cfg['module'])
-        return module.Store(cfg, self)
+        return module.Visitor(cfg, self)
 
     def init_sources(self, cfgs):
         sources = []
@@ -105,11 +105,11 @@ class Monitor:
             sources.append(self.init_source(cfg))
         return sources
 
-    def init_stores(self, cfgs):
-        stores = []
+    def init_visitors(self, cfgs):
+        visitors = []
         for cfg in cfgs:
-            stores.append(self.init_store(cfg))
-        return stores
+            visitors.append(self.init_visitor(cfg))
+        return visitors
 
     def sample_points(self):
         points = []
@@ -127,9 +127,9 @@ class Monitor:
             self.log.debug(f'Sample {source.name} takes {t2-t1:.3f} ms')
         return points
 
-    def save_points(self, points):
-        for store in self.stores:
-            store.save(points)
+    def visit_points(self, points):
+        for visitor in self.visitors:
+            visitor.visit(points)
         c = len(points)
         self.count += c
         self.c_rpt += c
@@ -153,10 +153,10 @@ class Monitor:
         self.log.debug(f'Sample loop takes {t2-t1:.3f} ms')
         if len(self.buffer) >= self.batch:
             t1 = time.time() * 1000
-            self.save_points(self.buffer)
+            self.visit_points(self.buffer)
             self.buffer.clear()
             t2 = time.time() * 1000
-            self.log.debug(f'Store loop takes {t2-t1:.3f} ms')
+            self.log.debug(f'Visitor loop takes {t2-t1:.3f} ms')
 
     def run(self):
         interval = self.get_config('interval')
@@ -186,7 +186,7 @@ class Monitor:
             self.cfg = self.load_config()
             self.log.debug(self.cfg)
             self.sources = self.init_sources(self.cfg['source'])
-            self.stores = self.init_stores(self.cfg['store'])
+            self.visitors = self.init_visitors(self.cfg['visitor'])
             self.run()
         except KeyboardInterrupt:
             self.log.info('Ctrl+C has been pressed. Exiting...')
@@ -194,7 +194,7 @@ class Monitor:
             qsize = len(self.buffer)
             if qsize > 0:
                 self.log.info(f'Wrote {qsize} points in buffer ...')
-                self.save_points(self.buffer)
+                self.visit_points(self.buffer)
                 self.buffer.clear()
             self.log.info(f'Wrote {self.count} points in total')
 

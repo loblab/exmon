@@ -1,13 +1,13 @@
-class BaseStore:
+class BaseVisitor:
 
     def __init__(self, cfg, app):
         self.log = app.log
         self.log.debug(f'Init store: {cfg}')
         self.name = cfg['module']
 
-    def write_point(self, point):
+    def save(self, point):
         raise NotImplementedError
 
-    def save(self, points):
+    def visit(self, points):
         for pt in points:
-            self.write_point(pt)
+            self.save(pt)

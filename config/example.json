@@ -5,7 +5,7 @@
     "source": [{
         "module": "source.fake"
     }],
-    "store": [{
+    "visitor": [{
         "module": "store.fs.jsondir",
         "dir": "/tmp/exmon/example",
         "file": "%Y/%m/%d/%H%M%S-%f.json"

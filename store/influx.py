@@ -1,9 +1,9 @@
 import json
 from datetime import datetime
 from influxdb import InfluxDBClient
-from .base import BaseStore
+from .base import BaseVisitor
 
-class Store(BaseStore):
+class Visitor(BaseVisitor):
 
     def __init__(self, cfg, app):
         super().__init__(cfg, app)
@@ -15,5 +15,5 @@ class Store(BaseStore):
         self.log.info("Connect to local InfluxDB (%s:%d)...", host, port)
         self.db = InfluxDBClient(host, port, user, pswd, data, timeout=5)
 
-    def save(self, points):
-        self.db.write_points(points)
+    def visit(self, points):
+        self.db.saves(points)

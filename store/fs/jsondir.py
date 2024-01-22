@@ -1,9 +1,9 @@
 import json
 from pathlib import Path
 from datetime import datetime
-from ..base import BaseStore
+from ..base import BaseVisitor
 
-class Store(BaseStore):
+class Visitor(BaseVisitor):
 
     def __init__(self, cfg, app):
         super().__init__(cfg, app)
@@ -11,7 +11,7 @@ class Store(BaseStore):
         self.rootdir.mkdir(parents=True, exist_ok=True)
         self.file = cfg['file']
 
-    def write_point(self, point):
+    def save(self, point):
         ts1 = point['time']
         # ts1 is time.time(), convert it to datetime
         ts2 = datetime.fromtimestamp(ts1)

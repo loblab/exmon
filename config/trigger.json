@@ -1,0 +1,20 @@
+{
+    "interval": 10,
+    "batch": 10,
+    "report": 12,
+    "source": [{
+        "module": "source.host"
+    }],
+    "visitor": [{
+        "module": "store.fs.jsondir",
+        "dir": "/tmp/exmon/host",
+        "file": "%Y/%m/%d/%H%M%S-%f.json"
+    },{
+        "module": "trigger.action",
+        "qsize": 10,
+        "field": "cpu_load",
+        "function": "max",
+        "condition": "< 1",
+        "action": "echo 'sudo shutdown -hP now'"
+    }]
+}

@@ -5,7 +5,7 @@
     "source": [{
         "module": "source.host"
     }],
-    "store": [{
+    "visitor": [{
         "module": "store.fs.jsondir",
         "dir": "/tmp/exmon/host",
         "file": "%Y/%m/%d/%H%M%S-%f.json"
