@@ -8,6 +8,7 @@ class BaseSource:
         self.log = app.log
         self.log.debug(f'Init source: {cfg}')
         self.name = cfg['module']
+        self.full = False # full mode or quick mode
 
     def run(self, cmdline):
         self.log.debug(cmdline)

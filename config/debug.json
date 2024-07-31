@@ -1,0 +1,14 @@
+{
+    "interval": 60,
+    "batch": 1,
+    "report": 12,
+    "full": 3,
+    "source": [{
+        "module": "source.host"
+    }],
+    "visitor": [{
+        "module": "store.fs.jsondir",
+        "dir": "/tmp/exmon/host",
+        "file": "%Y/%m/%d/%H%M%S-%f.json"
+    }]
+}

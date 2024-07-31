@@ -6,83 +6,169 @@ from .base import BaseSource
 
 def get_lan_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    #s.connect(("8.8.8.8", 80))
-    #s.connect(("114.114.114.114", 80))
     s.connect(("1.2.3.4", 56))
-    ip_address = s.getsockname()[0]
+    ip = s.getsockname()[0]
     s.close()
-    return ip_address
+    return ip
+
+def get_wan_ip():
+    ip = os.popen('curl -sL ip.sb').read()
+    return ip.strip()
 
 class Source(BaseSource):
 
     def __init__(self, cfg, app):
         super().__init__(cfg, app)
+        if 'hostname' in cfg:
+            self.hostname = cfg['hostname']
+        else:
+            self.hostname = socket.gethostname()
+        self.nproc = 1
 
     def sample(self):
-        point = {}
-        self.sample_loadavg(point)
-        self.sample_meminfo(point)
-        self.sample_cpu_temp(point)
-        self.sample_gpuinfo(point)
-        self.sample_disk(point)
-        self.sample_net(point)
-        return point
+        self.tags = {
+            'host': self.hostname
+        }
+        self.fields = {}
+        if self.full:
+            self.get_sysinfo()
+        self.sample_loadavg()
+        self.sample_meminfo()
+        self.sample_cpu_temp()
+        self.sample_gpuinfo()
+        self.sample_disk()
+        self.sample_uptime()
+        return {
+            'tags': self.tags,
+            'fields': self.fields
+        }
 
-    def get_disk_space(self, path):
+    def get_cpuinfo(self):
+        with open('/proc/cpuinfo', 'r') as f:
+            lines = f.readlines()
+            for line in lines:
+                if line.startswith('model name'):
+                    cpu_model = line.split(':')[1].strip()
+                    self.fields['cpu_model'] = cpu_model
+                    self.tags['cpu_model'] = cpu_model
+                elif line.startswith('cpu MHz'):
+                    cpu_mhz = float(line.split(':')[1].strip())
+                    self.fields['cpu_mhz'] = cpu_mhz
+                elif line.startswith('cpu cores'):
+                    cpu_cores = int(line.split(':')[1].strip())
+                    self.fields['cpu_cores'] = cpu_cores
+                elif line.startswith('siblings'):
+                    cpu_threads = int(line.split(':')[1].strip())
+                    self.fields['cpu_threads'] = cpu_threads
+                    self.nproc = cpu_threads
+                elif line.startswith('cache size'):
+                    cpu_cache = line.split(':')[1].strip()
+                    self.fields['cpu_cache'] = cpu_cache
+
+    def get_sysinfo(self):
+        self.get_cpuinfo()
+        lan_ip = get_lan_ip()
+        wan_ip = get_wan_ip()
+        self.fields['lan_ip'] = lan_ip
+        self.fields['wan_ip'] = wan_ip
+        self.tags['wan_ip'] = wan_ip
+
+    def get_disk_space(self, path, name):
+        if not os.path.exists(path):
+            return
         s = os.statvfs(path)
-        return s.f_bavail * s.f_bsize / 1e9  # GB
+        avail = s.f_bavail * s.f_bsize # bytes
+        self.fields['disk_avail_' + name] = avail
+        if self.full:
+            total = s.f_blocks * s.f_bsize # bytes
+            self.fields['disk_total_' + name] = total
 
-    def sample_loadavg(self, point):
+    def sample_loadavg(self):
         with open('/proc/loadavg', 'r') as f:
             line = f.readline()
-            cpuload = float(line.split()[0])
-            point['cpu_load'] = cpuload
-            #self.log.debug("CPU load: %.1f%%", cpuload)
+            words = line.split()
+            load1 = float(words[0])
+            load5 = float(words[1])
+            load15 = float(words[2])
+            procinfo = words[3].split('/')
+            proc_run = int(procinfo[0])
+            proc_total = int(procinfo[1])
+            pid = int(words[4])
+            self.fields['cpu_load1'] = load1
+            self.fields['cpu_load5'] = load5
+            self.fields['cpu_load15'] = load15
+            self.fields['proc_run'] = proc_run
+            self.fields['proc_total'] = proc_total
+            self.fields['proc_pid'] = pid
 
-    def sample_meminfo(self, point):
+    def sample_meminfo(self):
         # get memory usage from /proc/meminfo
         with open('/proc/meminfo', 'r') as f:
             line = f.readline()
-            memtotal = int(line.split()[1])
+            memtotal = int(line.split()[1]) * 1024
             line = f.readline()
-            memfree = int(line.split()[1])
-            memused = (memtotal - memfree) / 1e6  # GB
-            point['mem_used'] = memused
-            memload = (memtotal - memfree) / memtotal * 100
-            point['mem_load'] = memload
-            #self.log.debug("CPU memory usage: %.1f%%", memload)
+            memfree = int(line.split()[1]) * 1024
+            memused = (memtotal - memfree) # bytes
+            self.fields['mem_free'] = memfree
+            self.fields['mem_total'] = memtotal
+            #self.fields['mem_used'] = memused
+            #memload = (memtotal - memfree) / memtotal
+            #self.fields['mem_load'] = memload
 
-    def sample_cpu_temp(self, point):
+    def sample_cpu_temp(self):
         file='/sys/class/thermal/thermal_zone0/temp'
         if not os.path.exists(file):
             return
         with open(file, 'r') as f:
             temp = int(f.readline()) / 1000
-            point['cpu_temp'] = temp
+            self.fields['cpu_temp'] = temp
             #self.log.debug("CPU temp: %.1f'C", temp)
 
-    def sample_gpuinfo(self, point):
+    def sample_gpuinfo(self):
         # get gpu load and memory usage from nvidia-smi
         gpuload = 0
         gpumem = 0
         if not os.path.exists('/usr/bin/nvidia-smi'):
             return
-        cmd = '/usr/bin/nvidia-smi --query-gpu=utilization.gpu,utilization.memory --format=csv,noheader,nounits'
+        if self.full:
+            cmd = 'nvidia-smi --query-gpu=name,memory.total --format=csv,noheader,nounits'
+            with os.popen(cmd) as f:
+                line = f.readline()
+                words = line.split(',')
+                if len(words) < 2:
+                    return
+                model = words[0].strip()
+                memtotal = int(words[1].strip()) * 1024 * 1024
+                self.fields['gpu_model'] = model
+                self.fields['gpu_mem_total'] = memtotal
+                self.tags['gpu_model'] = model
+        cmd = 'nvidia-smi --query-gpu=utilization.gpu,temperature.gpu,memory.free --format=csv,noheader,nounits'
         with os.popen(cmd) as f:
             line = f.readline()
-            gpuload = float(line.split(',')[0])
-            gpumem = float(line.split(',')[1])
-            point['gpu_load'] = gpuload
-            point['gpu_mem'] = gpumem
-            #self.log.debug("GPU load: %.1f%%, GPU memory usage: %.1f%%", gpuload, gpumem)
+            words = line.split(',')
+            if len(words) < 3:
+                return
+            gpuload = float(words[0]) / 100
+            gputemp = float(words[1])
+            memfree = int(words[2]) * 1024 * 1024
+            self.fields['gpu_load'] = gpuload
+            self.fields['gpu_temp'] = gputemp
+            self.fields['gpu_mem_free'] = memfree
 
-    def sample_disk(self, point):
-        root = self.get_disk_space('/')
-        home = self.get_disk_space('/home')
-        #self.log.debug("root: %.4f(GB); home: %.4f(GB)", root, home)
-        point['disk_root'] = root
-        point['disk_home'] = home
+    def sample_disk(self):
+        self.get_disk_space('/', 'root')
+        self.get_disk_space('/home', 'home')
+        self.get_disk_space('/hdd', 'hdd')
+        self.get_disk_space('/nas', 'hdd')
 
-    def sample_net(self, point):
+    def sample_net(self):
         ip = get_lan_ip()
-        point['lan_ip'] = ip
+        self.fields['lan_ip'] = ip
+
+    def sample_uptime(self):
+        with open('/proc/uptime', 'r') as f:
+            words = f.readline().split()
+            uptime = float(words[0])
+            idletime = float(words[1]) / self.nproc
+            self.fields['uptime'] = uptime
+            self.fields['cpu_idle'] = idletime

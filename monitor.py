@@ -9,7 +9,7 @@ import importlib
 from pathlib import Path
 
 DESCRIPTION = 'Extensible monitor by Python'
-VERSION = "pymon ver 0.1.2 (1/22/2024)"
+VERSION = "pymon ver 0.2.3 (7/31/2024)"
 
 class Monitor:
 
@@ -113,8 +113,10 @@ class Monitor:
 
     def sample_points(self):
         points = []
+        full = self.count % self.full == 0
         for source in self.sources:
-            t1 = time.time() * 1000
+            t1 = time.time() * 1000 # ms
+            source.full = full
             pts = source.sample()
             if not isinstance(pts, list):
                 pts = [pts]
@@ -146,7 +148,7 @@ class Monitor:
         return val
 
     def run_once(self):
-        t1 = time.time() * 1000
+        t1 = time.time() * 1000 # ms
         points = self.sample_points()
         self.buffer.extend(points)
         t2 = time.time() * 1000
@@ -161,6 +163,7 @@ class Monitor:
     def run(self):
         interval = self.get_config('interval')
         self.batch = self.get_config('batch', 1)
+        self.full = self.get_config('full', 24)
         self.trigger_report = self.get_config('report', 128)
         self.buffer = []
         self.count = 0
