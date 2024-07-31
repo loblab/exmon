@@ -116,13 +116,14 @@ class Source(BaseSource):
             #self.fields['mem_load'] = memload
 
     def sample_cpu_temp(self):
-        file='/sys/class/thermal/thermal_zone0/temp'
-        if not os.path.exists(file):
-            return
-        with open(file, 'r') as f:
-            temp = int(f.readline()) / 1000
-            self.fields['cpu_temp'] = temp
-            #self.log.debug("CPU temp: %.1f'C", temp)
+        thermal_zones = os.listdir('/sys/class/thermal/')
+        for zone in thermal_zones:
+            if zone.startswith('thermal_zone'):
+                with open(f'/sys/class/thermal/{zone}/temp') as temp_file:
+                    temp_mC = int(temp_file.read())
+                    temp_C = temp_mC / 1000
+                    self.fields['cpu_temp'] = temp_C
+                    return temp_C
 
     def sample_gpuinfo(self):
         # get gpu load and memory usage from nvidia-smi
