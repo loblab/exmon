@@ -104,16 +104,17 @@ class Source(BaseSource):
     def sample_meminfo(self):
         # get memory usage from /proc/meminfo
         with open('/proc/meminfo', 'r') as f:
-            line = f.readline()
-            memtotal = int(line.split()[1]) * 1024
-            line = f.readline()
-            memfree = int(line.split()[1]) * 1024
-            memused = (memtotal - memfree) # bytes
-            self.fields['mem_free'] = memfree
-            self.fields['mem_total'] = memtotal
-            #self.fields['mem_used'] = memused
-            #memload = (memtotal - memfree) / memtotal
-            #self.fields['mem_load'] = memload
+            lines = f.readlines()
+            for line in lines:
+                words = line.split()
+                if len(words) < 2:
+                    continue
+                if words[0] == 'MemTotal:':
+                    memtotal = int(words[1]) * 1024
+                    self.fields['mem_total'] = memtotal
+                elif words[0] == 'MemAvailable:':
+                    memavail = int(words[1]) * 1024
+                    self.fields['mem_avail'] = memavail
 
     def sample_cpu_temp(self):
         thermal_zones = os.listdir('/sys/class/thermal/')
