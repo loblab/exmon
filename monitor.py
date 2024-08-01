@@ -9,7 +9,7 @@ import importlib
 from pathlib import Path
 
 DESCRIPTION = 'Extensible monitor by Python'
-VERSION = "pymon ver 0.2.5 (7/31/2024)"
+VERSION = "pymon ver 0.3.0 (8/1/2024)"
 
 class Monitor:
 
