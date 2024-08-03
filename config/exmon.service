@@ -1,5 +1,5 @@
 [Unit]
-Description=extensible python monitor 7/29/2024
+Description=extensible python monitor (_TIME_)
 After=network.target
 StartLimitIntervalSec=0
 
@@ -7,7 +7,7 @@ StartLimitIntervalSec=0
 Type=simple
 Restart=always
 RestartSec=300s
-ExecStartPre=/bin/sleep 1
+ExecStartPre=/bin/sleep 60
 ExecStart=/usr/local/loblab/exmon/bin/node.sh
 
 [Install]

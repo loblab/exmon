@@ -29,8 +29,11 @@ function copy_files() {
 }
 
 function install_service() {
+    local now
     echo "Install service $SERVICE_NAME ..."
     $RUN sudo cp $TARGET_DIR/config/$SERVICE_NAME.service $SERVICE_DIR/
+    now=$(date '+%m/%d/%Y\ %H:%M:%S')
+    $RUN sudo sed -i "s#_TIME_#$now#" $SERVICE_DIR/$SERVICE_NAME.service
     $RUN sudo systemctl daemon-reload
     $RUN sudo systemctl enable $SERVICE_NAME
     $RUN sudo systemctl restart $SERVICE_NAME

@@ -2,7 +2,7 @@
     "interval": 300,
     "batch": 1,
     "report": 12,
-    "full": 432,
+    "full": 288,
     "source": [{
         "module": "source.host"
     }]

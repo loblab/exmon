@@ -65,8 +65,23 @@ class Source(BaseSource):
                     cpu_cache = line.split(':')[1].strip()
                     self.fields['cpu_cache'] = cpu_cache
 
+    def get_osver(self):
+        if os.path.exists('/etc/os-release'):
+            with open('/etc/os-release', 'r') as f:
+                lines = f.readlines()
+                for line in lines:
+                    if line.startswith('PRETTY_NAME='):
+                        osv = line.split('=')[1].strip().strip('"')
+                        self.fields['os'] = osv
+                        self.tags['os'] = osv
+                        break
+        kernel = os.uname().release
+        self.fields['kernel'] = kernel
+        self.tags['kernel'] = kernel
+
     def get_sysinfo(self):
-        self.get_cpuinfo()
+        self.get_cpuinfo()  # get threads/nproc first, used later
+        self.get_osver()
         lan_ip = get_lan_ip()
         wan_ip = get_wan_ip()
         self.fields['lan_ip'] = lan_ip
