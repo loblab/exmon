@@ -124,12 +124,13 @@ class Source(BaseSource):
                 words = line.split()
                 if len(words) < 2:
                     continue
-                if words[0] == 'MemTotal:':
-                    memtotal = int(words[1]) * 1024
-                    self.fields['mem_total'] = memtotal
-                elif words[0] == 'MemAvailable:':
+                if words[0] == 'MemAvailable:':
                     memavail = int(words[1]) * 1024
                     self.fields['mem_avail'] = memavail
+                elif words[0] == 'MemTotal:':
+                    if self.full:
+                        memtotal = int(words[1]) * 1024
+                        self.fields['mem_total'] = memtotal
 
     def sample_cpu_temp(self):
         thermal_zones = os.listdir('/sys/class/thermal/')
