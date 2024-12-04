@@ -1,5 +1,4 @@
 {
-    "interval": 5,
     "batch": 4,
     "report": 2,
     "full": 3,

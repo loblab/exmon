@@ -12,8 +12,12 @@ def get_lan_ip():
     return ip
 
 def get_wan_ip():
-    ip = os.popen('curl -sL ip.sb').read()
-    return ip.strip()
+    ip = os.popen('curl -sL ip.sb').read().strip()
+    if not ip:
+        ip = os.popen('curl -sL ident.me').read().strip()
+    if not ip:
+        ip = os.popen('curl -sL ifconfig.me').read().strip()
+    return ip
 
 class Source(BaseSource):
 

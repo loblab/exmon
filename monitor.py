@@ -9,7 +9,8 @@ import importlib
 from pathlib import Path
 
 DESCRIPTION = 'Extensible monitor by Python'
-VERSION = "pymon ver 0.3.2 (8/3/2024)"
+VER_NUM= '0.3.4 (8/9/2024)'
+VERSION = f'pymon ver {VER_NUM}'
 
 class Monitor:
 
@@ -123,6 +124,8 @@ class Monitor:
             for pt in pts:
                 if 'time' not in pt:
                     pt['time'] = time.time()
+                if full:
+                    pt['fields']['exmon'] = VER_NUM
                 self.log.debug(json.dumps(pt, sort_keys=True, indent=4))
             points.extend(pts)
             t2 = time.time() * 1000
